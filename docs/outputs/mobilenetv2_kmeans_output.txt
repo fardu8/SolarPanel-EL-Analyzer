@@ -1,0 +1,10 @@
+Weights loaded for model 1 from the file:  /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model1/model_1_weights.pth
+Model for cluster 0 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_0.pth
+Model for cluster 1 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_1.pth
+Model for cluster 2 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_2.pth
+Model for cluster 3 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_3.pth
+Model for cluster 4 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_4.pth
+Model for cluster 5 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_5.pth
+Model for cluster 6 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_6.pth
+Model for cluster 7 loaded from /Users/fardeenmohammed/unsw/2023/term3/computer_vision/solarpanels/SolarPanel-EL-Analyzer/src/features/mobilenetv2/model2/model2_cluster_7.pth
+Accuracy on test data : 91.87817258883248

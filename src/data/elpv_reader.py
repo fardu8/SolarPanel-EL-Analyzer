@@ -41,7 +41,7 @@ def load_dataset(file_name=None):
     types = np.char.decode(data['type'])
 
     dir = os.path.dirname(file_name)
-    images = np.array([(imread(os.path.join(dir, fn), as_gray=True) * 255).astype(np.uint8) for fn in image_file_names])
+    images = np.array([imread(os.path.join(dir, fn), as_gray=True) for fn in image_file_names])
 
     return images, probs, types
 
