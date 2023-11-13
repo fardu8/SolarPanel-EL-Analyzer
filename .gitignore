@@ -172,3 +172,6 @@ cython_debug/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Ignore Pickle files
+*.pkl
