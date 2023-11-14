@@ -14,9 +14,6 @@ class Image:
         self.contrast_image()
         self.export_preprocessed_data(data, type)
         self.split_data()
-        self.k = 80
-        self.shift_mean()
-        self.get_eigen()
         self.export_split(data, type)
 
     def get_data(self, data):
@@ -73,9 +70,9 @@ class Image:
         for I in self.images:
             self.processed.append(self.contrast_stretch(I))
         self.processed = np.stack(self.processed)
-        
+
     def export_preprocessed_data(self, data, type):
-         with open(f"../../../data/pickles/{data}_{type}_preprocessed.pkl", "wb") as f:
+        with open(f"../../../data/pickles/{data}_{type}_preprocessed.pkl", "wb") as f:
             dump = (
                 self.processed, self.probs, self.types
             )
@@ -83,10 +80,9 @@ class Image:
 
     def split_data(self):
         self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(
-            self.processed, self.probs, test_size=0.25, stratify=self.probs, random_state= 1
+            self.processed, self.probs, test_size=0.25, stratify=self.probs, random_state=1
         )
         self.train_X, self.test_X = self.train_X.T, self.test_X.T
-
 
     def export_split(self, data, type):
         with open(f"../../../data/pickles/{data}_{type}_split.pkl", "wb") as f:
@@ -100,7 +96,8 @@ class Image:
 
 
 if __name__ == "__main__":
-    combinations = list(product(["mono", "poly", "both"], [224], ["data", "augmented"]))
+    combinations = list(product(["mono", "poly", "both"], [
+                        224], ["data", "augmented"]))
     for combination in combinations:
         type, num, data = combination
         processs = Image(data=data, dim=(num, num), type=type)

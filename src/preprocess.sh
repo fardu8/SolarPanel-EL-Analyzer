@@ -8,6 +8,8 @@ else
     exit 1
 fi
 
+mkdir ../data/pickles
+
 cd data
 
 echo "Augmenting Data"
