@@ -58,7 +58,6 @@ class Image:
     def contrast_stretch(self, I):
         kernel = np.array([[1, 1, 1], [1, -8, 1], [1, 1, 1]])
         I = self.HSV_contrast(cv2.cvtColor(I, cv2.COLOR_BGR2RGB))
-        I = resize(I, (128, 128))
 
         gaus = cv2.GaussianBlur(I, (3, 3), 5.0)
 
@@ -79,6 +78,10 @@ class Image:
             pk.dump(dump, f)
 
     def split_data(self):
+        processed = []
+        for image in self.processed:
+            processed.append(image.flatten())
+        self.processed = np.stack(processed)
         self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(
             self.processed, self.probs, test_size=0.25, stratify=self.probs, random_state=1
         )

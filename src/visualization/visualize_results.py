@@ -80,7 +80,7 @@ def plot_metrics(model_name):
     plt.close()
 
 if __name__ == '__main__':
-    models = ['eigencell']
+    models = ['eigencell', 'mobilenetv2']
     
     for model in models:
         plot_metrics(model)
