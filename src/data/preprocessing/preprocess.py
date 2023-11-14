@@ -62,7 +62,7 @@ class Image:
 
         gaus = cv2.GaussianBlur(I, (3, 3), 5.0)
 
-        erode = cv2.erode(gaus, kernel=kernel).flatten()
+        erode = cv2.erode(gaus, kernel=kernel)
         return erode
 
     def contrast_image(self):

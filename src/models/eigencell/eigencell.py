@@ -6,6 +6,14 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 
 
+def get_metrics(test_y, pred):
+    return (
+        accuracy_score(test_y, pred),
+        f1_score(test_y, pred, average="weighted"),
+        confusion_matrix(test_y, pred),
+    )
+
+
 class EigenCell:
     def __init__(self, data="data", type="mono"):
         self.get_data(data, type)
@@ -21,7 +29,7 @@ class EigenCell:
                 self.test_X,
                 self.test_y
             ) = pk.load(f)
-            
+
     def shift_mean(self):
         self.means = np.mean(self.train_X, axis=1)
         centred = self.train_X - self.means[:, np.newaxis]
@@ -36,7 +44,7 @@ class EigenCell:
         self.D, C = np.linalg.eig(S)
         C = np.dot(self.train_X, C)
         self.C = C / np.linalg.norm(C, axis=0)
-        
+
     def fit(self):
         self.shift_mean()
         self.get_eigen()
@@ -45,9 +53,10 @@ class EigenCell:
         index = self.D.argsort()[::-1]
         D = self.D[index]
         C = self.C[:, index]
-        query = (self.test_X - self.means.reshape(-1, 1)) / self.norms.reshape(-1, 1)
+        query = (self.test_X - self.means.reshape(-1, 1)) / \
+            self.norms.reshape(-1, 1)
         self.Z = C.T @ query
-        self.Z[self.k :, :] = 0
+        self.Z[self.k:, :] = 0
         self.p = np.sum(D[: self.k]) / np.sum(D)
 
     def reconstruct_image(self):

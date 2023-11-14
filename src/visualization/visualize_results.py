@@ -2,7 +2,7 @@ import pandas as pd
 import pickle as pk
 import seaborn as sns
 import matplotlib.pyplot as plt
-import sys
+
 
 def plot_metrics(model_name):
     with open(f'../../data/pickles/results_{model_name}.pkl', 'rb') as f:
