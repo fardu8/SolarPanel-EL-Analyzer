@@ -88,11 +88,7 @@ class EigenCell:
         self.pred = self.le.transform(self.pred)
 
     def get_metrics(self):
-        return (
-            accuracy_score(self.test_y, self.pred),
-            f1_score(self.test_y, self.pred, average="weighted"),
-            confusion_matrix(self.test_y, self.pred),
-        )
+        return get_metrics(self.pred, self.test_y)
 
 
 if __name__ == "__main__":
