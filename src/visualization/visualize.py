@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn import metrics
 
 
 def visualize_images_by_type_and_proba(images, proba, types):
@@ -17,6 +18,14 @@ def visualize_images_by_type_and_proba(images, proba, types):
                 axs[i, j].set_title(f"Type: {t}\nProbability: {prob * 100:.0f}%")
             axs[i, j].axis('off')
     plt.tight_layout()
+    plt.show()
+
+
+def show_metrics(data):
+    print('Accuracy: ', data[0])
+    print('F1 score: ', data[1])
+    print("Confusion matrix: ")
+    metrics.ConfusionMatrixDisplay(data[2]).plot(values_format='.0f')
     plt.show()
 
 
