@@ -15,11 +15,20 @@ def get_metrics(test_y, pred):
 
 
 class EigenCell:
-    def __init__(self, data, type="mono"):
-        self.train_X, self.test_X, self.train_y, self.test_y = data
+    def __init__(self, data="data", type="mono"):
+        self.get_data(data, type)
         self.le = LabelEncoder().fit(self.train_y)
         self.test_y = self.le.transform(self.test_y)
         self.k = 80
+
+    def get_data(self, data, type):
+        with open(f"../../../data/pickles/{data}_{type}_split.pkl", "rb") as f:
+            (
+                self.train_X,
+                self.train_y,
+                self.test_X,
+                self.test_y
+            ) = pk.load(f)
 
     def shift_mean(self):
         self.means = np.mean(self.train_X, axis=1)
@@ -77,9 +86,24 @@ class EigenCell:
 
         self.pred = np.array(pred)
         self.pred = self.le.transform(self.pred)
-        return self.pred
 
     def get_metrics(self):
         return get_metrics(self.pred, self.test_y)
 
 
+if __name__ == "__main__":
+    combinations = list(
+        product(["mono", "poly", "both"], [224], ["data", "augmented"])
+    )
+    results = dict()
+    for combination in combinations:
+        type, num, data = combination
+        model = EigenCell(data=data, type=type)
+        model.fit()
+        model.predict()
+        results[combination] = model.get_metrics()
+        print(f"Done processing: {combination}")
+    results_df = pd.DataFrame(results).T
+
+    with open("../../../data/pickles/results_eigencell.pkl", "wb") as f:
+        pk.dump(results_df, f)
