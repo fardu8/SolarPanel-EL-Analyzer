@@ -124,16 +124,6 @@ class KNNClassifier:
 
         return [total, true_classification, c, p]
 
-    def save_model(self, filename):
-        with open(filename, 'wb') as file:
-            pk.dump(self, file)
-
-    @classmethod
-    def load_model(cls, filename):
-        with open(filename, 'rb') as file:
-            model = pk.load(file)
-        return model
-
 
 def create_sift_feature_database(X_train, Y_train_prob, Y_train_type):
     sift = cv2.SIFT_create()
@@ -264,7 +254,10 @@ test_mono = classifier.classifier(test_features_mono, Y)
 test_poly = classifier.classifier(test_features_poly, Y)
 
 knn_classifier = KNNClassifier(train, k=5)
-knn_classifier.save_model('./src/features/knn/knn_model.model')
+
+with open('./src/features/knn/knn_model.model', 'wb') as f:
+    pk.dump(knn_classifier, f)
+    
 results = knn_classifier.predict(test)
 results_mono = knn_classifier.predict(test_mono)
 results_poly = knn_classifier.predict(test_poly)
