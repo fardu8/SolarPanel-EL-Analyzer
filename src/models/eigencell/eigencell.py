@@ -1,9 +1,10 @@
 import pickle as pk
 import numpy as np
-from itertools import product
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 from sklearn.preprocessing import LabelEncoder
-import pandas as pd
+
+# FILE_PATH = '../../../data/pickles'
+FILE_PATH = './data/pickles'
 
 
 def get_metrics(test_y, pred):
@@ -15,39 +16,25 @@ def get_metrics(test_y, pred):
 
 
 class EigenCell:
-    def __init__(self, data="data", type="mono"):
-        self.get_data(data, type)
+    def __init__(self, type="mono"):
+        self.get_data(type)
         self.le = LabelEncoder().fit(self.train_y)
         self.test_y = self.le.transform(self.test_y)
         self.k = 80
 
-    def get_data(self, data, type):
-        with open(f"../../../data/pickles/{data}_{type}_split.pkl", "rb") as f:
+    def get_data(self, type):
+        with open(FILE_PATH+f"/data_{type}.pkl", "rb") as f:
             (
                 self.train_X,
                 self.train_y,
                 self.test_X,
-                self.test_y
+                self.test_y,
+                self.means,
+                self.norms,
+                self.k,
+                self.C,
+                self.D,
             ) = pk.load(f)
-
-    def shift_mean(self):
-        self.means = np.mean(self.train_X, axis=1)
-        centred = self.train_X - self.means[:, np.newaxis]
-        self.norms = np.linalg.norm(centred, np.inf, axis=1)
-        self.norms[self.norms == 0] = 1
-        self.train_X = centred / self.norms[:, np.newaxis]
-        self.means = self.means.reshape((self.means.shape[0], -1))
-        self.norms = self.norms.reshape((self.norms.shape[0], -1))
-
-    def get_eigen(self):
-        S = (1 / self.train_X.shape[1]) * (self.train_X.T @ self.train_X)
-        self.D, C = np.linalg.eig(S)
-        C = np.dot(self.train_X, C)
-        self.C = C / np.linalg.norm(C, axis=0)
-
-    def fit(self):
-        self.shift_mean()
-        self.get_eigen()
 
     def reduce_dimensionality(self):
         index = self.D.argsort()[::-1]
@@ -92,18 +79,16 @@ class EigenCell:
 
 
 if __name__ == "__main__":
-    combinations = list(
-        product(["mono", "poly", "both"], [224], ["data", "augmented"])
-    )
+    combinations = ["mono", "poly", "both"]
     results = dict()
     for combination in combinations:
-        type, num, data = combination
-        model = EigenCell(data=data, type=type)
-        model.fit()
-        model.predict()
-        results[combination] = model.get_metrics()
-        print(f"Done processing: {combination}")
-    results_df = pd.DataFrame(results).T
+        model = EigenCell(type=combination)
+        with open(FILE_PATH+f"/model_{combination}.pkl", "wb") as f:
+            pk.dump(model, f)
+        # model.predict()
+        # results[combination] = model.get_metrics()
+        # print(f"Done processing: {combination}")
+    # results_df = pd.DataFrame(results).T
 
-    with open("../../../data/pickles/results_eigencell.pkl", "wb") as f:
-        pk.dump(results_df, f)
+    # with open(FILE_PATH+"/results_eigencell.pkl", "wb") as f:
+        # pk.dump(results_df, f)

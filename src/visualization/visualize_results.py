@@ -4,8 +4,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
+FILE_PATH = './data/pickles'
 
-def plot_metrics(model_name):
+def plot_metrics():
     try:
         with open(f'../../data/pickles/results_{model_name}.pkl', 'rb') as f:
             df = pk.load(f)
