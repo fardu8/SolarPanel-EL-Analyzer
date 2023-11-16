@@ -1,15 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import cv2
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
-from scipy.spatial import distance
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
-from tqdm.auto import tqdm
+from tqdm import tqdm
 import pickle as pk
-from scipy.spatial import distance
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.neighbors import KNeighborsClassifier
+import random
 
 FILE_PATH = './data/pickles'
 
@@ -55,7 +53,7 @@ class ImageClassifier:
 
         for key, value in tqdm(x.items()):
             class_of_x = []
-            for img in value:
+            for img in tqdm(value):
                 hist = np.zeros(len(y))
 
                 if img is not None and all(feature is not None for feature in img):
@@ -69,60 +67,36 @@ class ImageClassifier:
         return feat
 
 
-class KNNClassifier:
-    def __init__(self, train_data, k=5):
-        self.train_data = train_data
+class CustomKNNClassifier:
+    def __init__(self, k=5):
         self.k = k
+        self.model = None
+
+    def train(self, train_data):
+        X_train = []
+        y_train = []
+
+        for key, features_list in train_data.items():
+            X_train.extend(features_list)
+            y_train.extend([key] * len(features_list))
+
+        self.model = KNeighborsClassifier(n_neighbors=self.k)
+        self.model.fit(X_train, y_train)
 
     def predict(self, test_data):
-        true_classification = 0
-        c = {}
-        keys = list(test_data.keys())
-        i = 0
-        total = 0
-        p = []
-        while i < len(keys):
-            key_i = keys[i]
-            c[key_i] = [0, 0]
-            j = 0
+        true_labels = []
+        predicted_labels = []
 
-            while j < len(test_data[key_i]):
-                tst = test_data[key_i][j]
-                ns = []
-                keys_t = list(self.train_data.keys())
-                k = 0
-                while k < len(keys_t):
-                    m = 0
-                    while m < len(self.train_data[keys_t[k]]):
-                        train = self.train_data[keys_t[k]][m]
-                        dist = distance.euclidean(tst, train)
-                        ns.append((dist, keys_t[k]))
-                        m += 1
+        for true_label, features_list in test_data.items():
+            for features in features_list:
+                true_labels.append(true_label)
+                predicted_label = self.model.predict([features])[0]
+                predicted_labels.append(predicted_label)
 
-                    k += 1
-                ns.sort(key=lambda x: x[0])
-                k_ns = ns[:self.k]
-
-                votes = {}
-                n = 0
-                while n < len(k_ns):
-                    neighbor = k_ns[n]
-                    votes[neighbor[1]] = votes.get(neighbor[1], 0) + 1
-                    n += 1
-
-                p.append(max(votes, key=votes.get))
-                if key_i == max(votes, key=votes.get):
-                    true_classification += 1
-                    c[key_i][0] += 1
-
-                total += 1
-                c[key_i][1] += 1
-
-                j += 1
-
-            i += 1
-
-        return [total, true_classification, c, p]
+        return {
+            "true_labels": true_labels,
+            "predicted_labels": predicted_labels
+        }
 
 
 def create_sift_feature_database(X_train, Y_train_prob, Y_train_type):
@@ -238,6 +212,7 @@ for i in range(len(X_test)):
         Y_test_type_poly.append(Y_test_type[i])
 
 
+Y = (K_Means_Clustering(200, list_of_desc))
 test_features = create_sift_feature_database(
     X_test, Y_test_prob, Y_test_type)[1]
 test_features_mono = create_sift_feature_database(
@@ -245,29 +220,73 @@ test_features_mono = create_sift_feature_database(
 test_features_poly = create_sift_feature_database(
     X_test_poly, Y_test_prob_poly, Y_test_type_poly)[1]
 
-Y = (K_Means_Clustering(200, list_of_desc))
 classifier = ImageClassifier()
-
 train = classifier.classifier(train_features, Y)
 test = classifier.classifier(test_features, Y)
 test_mono = classifier.classifier(test_features_mono, Y)
 test_poly = classifier.classifier(test_features_poly, Y)
 
-knn_classifier = KNNClassifier(train, k=5)
-
-with open('./src/features/knn/knn_model.model', 'wb') as f:
-    pk.dump(knn_classifier, f)
-    
+knn_classifier = CustomKNNClassifier(k=5)
+knn_classifier.train(train)
 results = knn_classifier.predict(test)
 results_mono = knn_classifier.predict(test_mono)
 results_poly = knn_classifier.predict(test_poly)
 
-metrics = {}
-metrics[('mono', 'data')] = list(evaluate_results(results))
-metrics[('poly', 'data')] = list(evaluate_results(results_mono))
-metrics[('both', 'data')] = list(evaluate_results(results_poly))
+with open('./data/pickles/knn_model.model', 'wb') as f:
+    pk.dump(knn_classifier, f)
 
-metrics = pd.DataFrame(metrics).T
+correct_indices = [i for i, (true_label, pred_label) in enumerate(zip(
+    results["true_labels"], results["predicted_labels"])) if true_label == pred_label]
+incorrect_indices = [i for i, (true_label, pred_label) in enumerate(zip(
+    results["true_labels"], results["predicted_labels"])) if true_label != pred_label]
 
-with open(FILE_PATH+"/results_knn.pkl", "wb") as f:
-    pk.dump(metrics, f)
+# Visualize a correctly classified image
+if correct_indices:
+    index = random.choice(correct_indices)
+    print("Correctly Classified Image:")
+    print("True Label:", results["true_labels"][index])
+    print("Predicted Label:", results["predicted_labels"][index])
+
+# Visualize an incorrectly classified image
+if incorrect_indices:
+    index = random.choice(incorrect_indices)
+    print("Incorrectly Classified Image:")
+    print("True Label:", results["true_labels"][index])
+    print("Predicted Label:", results["predicted_labels"][index])
+
+if correct_indices:
+    index = 794
+    correct_image = X_test[index]
+    print(index)
+
+    plt.figure(figsize=(4, 4))
+    plt.imshow(correct_image, cmap='gray')
+    # plt.title(f'Correctly Classified\nTrue Label: {results["true_labels"][index]}, Predicted Label: {results["predicted_labels"][index]}')
+    plt.axis('off')
+    plt.show()
+
+
+# Visualize an incorrectly classified image
+if incorrect_indices:
+    index = 575
+    incorrect_image = X_test[index]
+    print(index)
+    plt.figure(figsize=(4, 4))
+    plt.imshow(incorrect_image, cmap='gray')
+    # plt.title(f'Incorrectly Classified\nTrue Label: {results["true_labels"][index]}, Predicted Label: {results["predicted_labels"][index]}')
+    plt.axis('off')
+    plt.show()
+
+print("Accuracy:", accuracy_score(
+    results["true_labels"], results["predicted_labels"]))
+print("Accuracy Mono:", accuracy_score(
+    results_mono["true_labels"], results_mono["predicted_labels"]))
+print("Accuracy Poly:", accuracy_score(
+    results_poly["true_labels"], results_poly["predicted_labels"]))
+
+print("F1 Score:", f1_score(
+    results["true_labels"], results["predicted_labels"], average='weighted'))
+print("F1 Score Mono:", f1_score(
+    results_mono["true_labels"], results_mono["predicted_labels"], average='weighted'))
+print("F1 Score Poly:", f1_score(
+    results_poly["true_labels"], results_poly["predicted_labels"], average='weighted'))
