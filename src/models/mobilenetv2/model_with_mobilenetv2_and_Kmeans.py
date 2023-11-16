@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from sklearn.cluster import KMeans
 
 from src.models.mobilenetv2.model_architectures import Model1, FeatureExtractor, SolarCellDefectDetector
 from src.models.mobilenetv2.training import get_trained_model2, get_trained_model1, get_trained_kmeans

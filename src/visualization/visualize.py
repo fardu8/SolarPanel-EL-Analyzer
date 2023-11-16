@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from sklearn import metrics
 
 
@@ -21,11 +22,32 @@ def visualize_images_by_type_and_proba(images, proba, types):
     plt.show()
 
 
-def show_metrics(data):
+def show_metrics(data, display_size=(3, 3)):
     print('Accuracy: ', data[0])
     print('F1 score: ', data[1])
     print("Confusion matrix: ")
-    metrics.ConfusionMatrixDisplay(data[2]).plot(values_format='.0f')
+    disp = metrics.ConfusionMatrixDisplay(data[2])
+    disp.plot(values_format='.0f')
+    disp.figure_.set_size_inches(display_size)
+    plt.show()
+
+
+def show_image(img, title='', is_cmap=False, cmap='gray', display_size=(2, 2)):
+    if isinstance(img, torch.Tensor):
+        img = img.numpy()
+
+    if img.ndim == 4:
+        img = img[0]
+    if img.shape[0] == 1:
+        img = img.squeeze(0)
+
+    plt.figure(figsize=display_size)
+    if is_cmap:
+        plt.imshow(img, cmap=cmap)
+    else:
+        plt.imshow(img)
+    plt.title(title)
+    plt.axis('off')
     plt.show()
 
 
