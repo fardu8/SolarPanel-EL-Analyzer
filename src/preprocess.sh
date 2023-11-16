@@ -8,9 +8,9 @@ else
     exit 1
 fi
 
-mkdir ../data/pickles
+mkdir ./data/pickles
 
-cd data
+cd ./src/data
 
 echo "Augmenting Data"
 

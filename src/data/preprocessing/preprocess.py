@@ -7,17 +7,16 @@ from skimage.transform import resize
 FILE_PATH = './data/pickles'
 
 
-class Image:
-    def __init__(self, setting="mono"):
+class Preprocess:
+    def __init__(self):
         self.get_data()
         self.set_dimension()
-        self.get_data_from_type(setting)
         self.contrast_image()
         self.split_data()
         self.k = 80
         self.shift_mean()
         self.get_eigen()
-        self.export_data(setting)
+        self.export_data()
 
     def get_data(self):
         with open(FILE_PATH+"/data.pkl", "rb") as f:
@@ -25,13 +24,6 @@ class Image:
 
     def set_dimension(self):
         self.dimension = 128
-
-    def get_data_from_type(self, setting="mono"):
-        if setting == "both":
-            return
-        mask = self.types == setting
-        self.images = self.images[mask]
-        self.probs = self.probs[mask]
 
     def min_max_normal(self, channel, c, d):
         O = (channel.astype("float") - c) * (255 / (d - c))
@@ -72,10 +64,15 @@ class Image:
         self.processed = np.stack(processed)
 
     def split_data(self):
-        self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(
-            self.processed, self.probs, test_size=0.25, stratify=self.probs, random_state=1
+        y = np.c_[self.probs, self.types]
+        self.train_X, self.test_X, self.train_y, test_y = train_test_split(
+            self.processed, y, test_size=0.25, stratify=y, random_state=1
         )
+        self.train_y = self.train_y[:, 0]
+
         self.train_X, self.test_X = self.train_X.T, self.test_X.T
+        self.test_y = test_y[:, 0]
+        self.types = test_y[:, 1]
 
     def shift_mean(self):
         self.means = np.mean(self.train_X, axis=1)
@@ -92,13 +89,14 @@ class Image:
         C = np.dot(self.train_X, C)
         self.C = C / np.linalg.norm(C, axis=0)
 
-    def export_data(self, setting):
-        with open(FILE_PATH+f"/data_{setting}.pkl", "wb") as f:
+    def export_data(self):
+        with open(FILE_PATH+"/preprocessed.pkl", "wb") as f:
             dump = (
                 self.train_X,
                 self.train_y,
                 self.test_X,
                 self.test_y,
+                self.types,
                 self.means,
                 self.norms,
                 self.k,
@@ -109,7 +107,4 @@ class Image:
 
 
 if __name__ == "__main__":
-    combinations = ["mono", "poly", "both"]
-    for combination in combinations:
-        processs = Image(setting=combination)
-        print(f'Done processing: {combination}')
+    processs = Preprocess()
