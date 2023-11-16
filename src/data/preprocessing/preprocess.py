@@ -73,7 +73,7 @@ class Image:
 
     def split_data(self):
         self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(
-            self.processed, self.probs, test_size=0.25, stratify=self.probs
+            self.processed, self.probs, test_size=0.25, stratify=self.probs, random_state=1
         )
         self.train_X, self.test_X = self.train_X.T, self.test_X.T
 

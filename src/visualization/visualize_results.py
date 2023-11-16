@@ -6,7 +6,7 @@ import numpy as np
 
 FILE_PATH = './data/pickles'
 
-def plot_metrics():
+def plot_metrics(model_name):
     try:
         with open(f'../../data/pickles/results_{model_name}.pkl', 'rb') as f:
             df = pk.load(f)

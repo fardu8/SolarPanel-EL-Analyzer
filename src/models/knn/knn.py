@@ -1,17 +1,18 @@
-import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import cv2
-from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 from scipy.spatial import distance
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
-from tqdm.auto import tqdm 
+from tqdm.auto import tqdm
 import pickle as pk
 from scipy.spatial import distance
 from sklearn.metrics import accuracy_score, f1_score
+
+FILE_PATH = './data/pickles'
+
 
 def evaluate_results(results):
     true_labels = []
@@ -23,6 +24,7 @@ def evaluate_results(results):
     f1 = f1_score(true_labels, results[3], average='weighted')
 
     return overall_accuracy, f1, conf_matrix
+
 
 class ImageClassifier:
     def __init__(self):
@@ -36,9 +38,11 @@ class ImageClassifier:
 
         while i < len(c):
             if i == 0:
-                itr = np.linalg.norm(np.subtract(np.array(img), np.array(c[i])))
+                itr = np.linalg.norm(np.subtract(
+                    np.array(img), np.array(c[i])))
             else:
-                dist = np.linalg.norm(np.subtract(np.array(img), np.array(c[i])))
+                dist = np.linalg.norm(np.subtract(
+                    np.array(img), np.array(c[i])))
                 if dist < itr:
                     ith = i
                     itr = dist
@@ -63,7 +67,8 @@ class ImageClassifier:
             feat[key] = class_of_x
 
         return feat
-    
+
+
 class KNNClassifier:
     def __init__(self, train_data, k=5):
         self.train_data = train_data
@@ -130,8 +135,6 @@ class KNNClassifier:
         return model
 
 
-
-
 def create_sift_feature_database(X_train, Y_train_prob, Y_train_type):
     sift = cv2.SIFT_create()
     desc = []
@@ -144,10 +147,10 @@ def create_sift_feature_database(X_train, Y_train_prob, Y_train_type):
 
     for img, p, t in tqdm(zip(X_train, Y_train_prob, Y_train_type), total=len(X_train)):
         kp, des = sift.detectAndCompute(img, None)
-        
+
         if des is not None:
             desc.extend(des)
-        
+
         if p >= 0.99:
             img_class = 'certainly_defective'
         elif p >= 0.66:
@@ -157,19 +160,21 @@ def create_sift_feature_database(X_train, Y_train_prob, Y_train_type):
         else:
             img_class = 'fully_functional'
 
-        sift_database[img_class].append(( des))
+        sift_database[img_class].append((des))
 
-    return [desc,sift_database]
+    return [desc, sift_database]
+
 
 def K_Means_Clustering(k, des):
-    K_Means_Clustering = KMeans(n_clusters = k, n_init=10)
+    K_Means_Clustering = KMeans(n_clusters=k, n_init=10)
     K_Means_Clustering.fit(des)
-    k_means_clusters = K_Means_Clustering.cluster_centers_ 
+    k_means_clusters = K_Means_Clustering.cluster_centers_
     return k_means_clusters
 
-with open('../../../data/pickles/data.pkl', 'rb') as f:
+
+with open('./data/pickles/data.pkl', 'rb') as f:
     images, proba, types = pk.load(f)
-    
+
 _images = []
 _proba = []
 _types = []
@@ -178,10 +183,11 @@ for img, prob, typ in zip(images, proba, types):
     if len(img.shape) == 3:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     min_val, max_val, _, _ = cv2.minMaxLoc(img)
-    cs_img = cv2.convertScaleAbs(img, alpha=255.0/(max_val - min_val), beta=-min_val * 255.0/(max_val - min_val))
+    cs_img = cv2.convertScaleAbs(
+        img, alpha=255.0/(max_val - min_val), beta=-min_val * 255.0/(max_val - min_val))
     b_image = cv2.GaussianBlur(cs_img, (5, 5), 0)
-    
-    _images.extend([img,b_image])
+
+    _images.extend([img, b_image])
     _proba.extend([prob] * 2)
     _types.extend([typ] * 2)
 
@@ -192,7 +198,8 @@ types = _types
 
 labels = [f'{p}_{t}' for p, t in zip(proba, types)]
 
-X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.25, random_state=42, stratify=labels)
+X_train, X_test, y_train, y_test = train_test_split(
+    images, labels, test_size=0.25, random_state=42, stratify=labels)
 Y_train_prob, Y_train_type = zip(*[label.split("_") for label in y_train])
 Y_test_prob, Y_test_type = zip(*[label.split("_") for label in y_test])
 
@@ -204,21 +211,24 @@ img_1 = X_train[0].copy()
 img_2 = X_train[20].copy()
 
 keypoints, descriptors = sift.detectAndCompute(img_1, None)
-img_1_kp = cv2.drawKeypoints(img_1, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+img_1_kp = cv2.drawKeypoints(
+    img_1, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 keypoints, descriptors = sift.detectAndCompute(img_2, None)
-img_2_kp = cv2.drawKeypoints(img_2, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+img_2_kp = cv2.drawKeypoints(
+    img_2, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
 plt.figure(figsize=(12, 6))
 plt.subplot(141), plt.imshow(img_1, cmap='gray'), plt.title('Image')
 plt.subplot(142), plt.imshow(img_1_kp), plt.title('Keypopints')
 plt.subplot(143), plt.imshow(img_2, cmap='gray'), plt.title('Image')
 plt.subplot(144), plt.imshow(img_2_kp), plt.title('Keypopints')
-plt.savefig('../../../plots/sift_eda.png')
+plt.savefig('./plots/sift_eda.png')
 plt.close()
 
-sift_features = create_sift_feature_database(X_train, Y_train_prob, Y_train_type)
+sift_features = create_sift_feature_database(
+    X_train, Y_train_prob, Y_train_type)
 
-list_of_desc = sift_features[0] 
+list_of_desc = sift_features[0]
 train_features = sift_features[1]
 
 X_test_mono = []
@@ -236,32 +246,35 @@ for i in range(len(X_test)):
         X_test_poly.append(X_test[i])
         Y_test_prob_poly.append(Y_test_prob[i])
         Y_test_type_poly.append(Y_test_type[i])
-        
-        
-test_features = create_sift_feature_database(X_test,Y_test_prob,Y_test_type)[1] 
-test_features_mono = create_sift_feature_database(X_test_mono,Y_test_prob_mono,Y_test_type_mono)[1] 
-test_features_poly = create_sift_feature_database(X_test_poly,Y_test_prob_poly,Y_test_type_poly)[1]
+
+
+test_features = create_sift_feature_database(
+    X_test, Y_test_prob, Y_test_type)[1]
+test_features_mono = create_sift_feature_database(
+    X_test_mono, Y_test_prob_mono, Y_test_type_mono)[1]
+test_features_poly = create_sift_feature_database(
+    X_test_poly, Y_test_prob_poly, Y_test_type_poly)[1]
 
 Y = (K_Means_Clustering(200, list_of_desc))
 classifier = ImageClassifier()
 
-train = classifier.classifier(train_features, Y) 
+train = classifier.classifier(train_features, Y)
 test = classifier.classifier(test_features, Y)
 test_mono = classifier.classifier(test_features_mono, Y)
 test_poly = classifier.classifier(test_features_poly, Y)
 
 knn_classifier = KNNClassifier(train, k=5)
-knn_classifier.save_model('../../features/knn/knn_model.pkl')
+knn_classifier.save_model('./src/features/knn/knn_model.model')
 results = knn_classifier.predict(test)
 results_mono = knn_classifier.predict(test_mono)
 results_poly = knn_classifier.predict(test_poly)
 
 metrics = {}
-metrics[('mono', 'data')]  = list(evaluate_results(results))
-metrics[('poly', 'data')]  = list(evaluate_results(results_mono))
-metrics[('both', 'data')]  = list(evaluate_results(results_poly))
+metrics[('mono', 'data')] = list(evaluate_results(results))
+metrics[('poly', 'data')] = list(evaluate_results(results_mono))
+metrics[('both', 'data')] = list(evaluate_results(results_poly))
 
 metrics = pd.DataFrame(metrics).T
 
-with open("../../../data/pickles/results_knn.pkl", "wb") as f:
-        pk.dump(metrics, f)
+with open(FILE_PATH+"/results_knn.pkl", "wb") as f:
+    pk.dump(metrics, f)
