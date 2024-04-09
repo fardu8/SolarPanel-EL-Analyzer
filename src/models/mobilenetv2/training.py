@@ -1,17 +1,19 @@
 import os
 
 import torch
+from sklearn.cluster import KMeans
 from torch import nn, optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import Subset, DataLoader
+import joblib as joblib
 
 from src.models.mobilenetv2.model_architectures import Model2
 
 
-def get_trained_model1(model1, train_loader, val_loader, learning_rate, epochs):
+def get_trained_model1(model1, train_loader, val_loader, learning_rate, epochs, data_type):
     root_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir, os.path.pardir))
-    file_name = os.path.join(root_dir, 'src', 'features', 'mobilenetv2', 'model1',
+    file_name = os.path.join(root_dir, 'src', 'features', 'mobilenetv2', data_type, 'model1',
                              'model_1_weights.pth')
     if os.path.exists(file_name) and model1.load_weights:
         model1.model.load_state_dict(torch.load(file_name))
@@ -74,8 +76,9 @@ def get_trained_model1(model1, train_loader, val_loader, learning_rate, epochs):
         return model
 
 
-def get_trained_model2(K, model, train_dataset, val_dataset, cluster_labels, cluster_val_labels, device, epochs_for_each_cluster,
-                       load_weights=False):
+def get_trained_model2(K, model, train_dataset, val_dataset, cluster_labels, cluster_val_labels, device,
+                       epochs_for_each_cluster,
+                       data_type, load_weights=False):
     patience = 5
     model2_instances = []
 
@@ -87,7 +90,7 @@ def get_trained_model2(K, model, train_dataset, val_dataset, cluster_labels, clu
         model2_instance = Model2(model, 4, device).to(device)
         root_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir, os.path.pardir))
-        file_name = os.path.join(root_dir, 'src', 'features', 'mobilenetv2', 'model2',
+        file_name = os.path.join(root_dir, 'src', 'features', 'mobilenetv2', data_type, 'model2',
                                  f'model2_cluster_{cluster_id}.pth')
         if os.path.exists(file_name) and load_weights:
             model2_instance.load_state_dict(torch.load(file_name))
@@ -162,3 +165,30 @@ def get_trained_model2(K, model, train_dataset, val_dataset, cluster_labels, clu
             print(f"Model for cluster {cluster_id} saved at {file_name}")
 
     return model2_instances
+
+
+def get_trained_kmeans(train_features, val_features, data_type, load_weights=False):
+    root_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir, os.path.pardir))
+    kmeans_file_name = os.path.join(root_dir, 'src', 'features', 'mobilenetv2', data_type, 'kmeans',
+                                    'kmeans.pkl')
+    cluster_labels_file_name = os.path.join(root_dir, 'src', 'features', 'mobilenetv2', data_type, 'kmeans',
+                                            'cluster_labels.pkl')
+    cluster_val_labels_file_name = os.path.join(root_dir, 'src', 'features', 'mobilenetv2', data_type, 'kmeans',
+                                                'cluster_val_labels.pkl')
+    if os.path.exists(kmeans_file_name) and os.path.exists(cluster_labels_file_name) and os.path.exists(
+            cluster_val_labels_file_name) and load_weights:
+        kmeans = joblib.load(kmeans_file_name)
+        cluster_labels = joblib.load(cluster_labels_file_name)
+        cluster_val_labels = joblib.load(cluster_val_labels_file_name)
+        print("kmeans model loaded from : ", kmeans_file_name)
+    else:
+        K = 8
+        kmeans = KMeans(n_clusters=K, random_state=42, n_init=10)
+        cluster_labels = kmeans.fit_predict(train_features)
+        cluster_val_labels = kmeans.fit_predict(val_features)
+        joblib.dump(kmeans, kmeans_file_name)
+        joblib.dump(cluster_labels, cluster_labels_file_name)
+        joblib.dump(cluster_val_labels, cluster_val_labels_file_name)
+
+    return kmeans, cluster_labels, cluster_val_labels
